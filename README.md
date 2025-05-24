@@ -5,7 +5,7 @@ An intelligent agent that automatically improves OpenAPI specification security 
 ## 🎯 What It Does
 
 1. **Loads OpenAPI specs** from direct files or FastAPI projects
-2. **Runs 42crunch security audits** to identify vulnerabilities
+2. **Runs 42crunch security audits** via Docker to identify vulnerabilities
 3. **Uses AI** (Groq) to generate security fixes when score < target
 4. **Applies patches** and re-tests until security standards are met
 5. **Generates improvement guides** for FastAPI projects
@@ -14,20 +14,31 @@ An intelligent agent that automatically improves OpenAPI specification security 
 
 - **Direct OpenAPI Files**: Process `.yaml`, `.yml`, or `.json` specs directly
 - **FastAPI Projects**: Process FastAPI projects using static `openapi.json` files
-- **AI-Powered Fixes**: Uses Groq's free `llama-3.1-70b-versatile` model
+- **Docker-Based Security Audits**: Uses official 42crunch Docker image
+- **AI-Powered Fixes**: Uses Groq's free `llama-3.1-8b-instant` model
 - **Iterative Improvement**: Loops until target security score is achieved
 - **Detailed Logging**: Shows exactly what's happening at each step
 - **FastAPI Integration**: Generates code suggestions for FastAPI projects
+- **Smart Fallbacks**: Falls back to mock mode when Docker is unavailable
 
 ## 📋 Prerequisites
 
-1. **42crunch CLI**: For security auditing
+1. **Docker**: For running 42crunch security audits
 
    ```bash
-   npm install -g @42crunch/audit-cli
+   # macOS with Homebrew
+   brew install --cask docker
+
+   # Or download from: https://www.docker.com/products/docker-desktop/
    ```
 
+   **Start Docker Desktop** after installation and ensure it's running.
+
 2. **42crunch API Token**: Get from [42crunch.com](https://42crunch.com)
+
+   - Create account at [42crunch Platform](https://platform.42crunch.com)
+   - Go to **Profile** → **Tokens** → **Create new token**
+   - Required permissions: ✅ API Security Audit, ✅ List resources, ✅ Delete resources
 
 3. **Groq API Key**: Get free key from [console.groq.com](https://console.groq.com)
 
@@ -89,6 +100,8 @@ SPEC_PATH=./my-api-spec.yaml
        json.dump(app.openapi(), f, indent=2)
    ```
 
+   **Method 3**: Use VS Code OpenAPI extension to generate and save
+
 2. **Point to your FastAPI project directory**:
 
    ```env
@@ -107,7 +120,7 @@ SPEC_PATH=./my-api-spec.yaml
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │ Load OpenAPI    │    │ 42crunch Audit  │    │ AI Fix          │
-│ Spec            │ -> │ Security Check  │ -> │ Generation      │
+│ Spec            │ -> │ (Docker)        │ -> │ Generation      │
 │                 │    │                 │    │ (if needed)     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
@@ -127,12 +140,21 @@ SPEC_PATH=./my-api-spec.yaml
 └─────────────────┘
 ```
 
+### Docker Integration
+
+The agent automatically:
+
+1. **Detects Docker availability** and pulls `42crunch/docker-api-security-audit:v4`
+2. **Runs real security audits** when Docker is available
+3. **Falls back to mock mode** for development when Docker is unavailable
+4. **Handles ARM64/Apple Silicon** with automatic platform emulation
+
 ### For FastAPI Projects
 
 When processing FastAPI projects, the agent:
 
 1. **Loads** the `openapi.json` file from your project directory
-2. **Audits** the security and generates fixes
+2. **Audits** the security using Docker-based 42crunch analysis
 3. **Saves** improved specs and implementation guides:
    - `openapi_improved.yaml` - Enhanced OpenAPI spec
    - `security_improvements.md` - FastAPI code suggestions
@@ -150,6 +172,9 @@ When processing FastAPI projects, the agent:
 📝 Converted to YAML (4123 characters)
 
 🔍 Running 42crunch security audit...
+🐳 Using Docker-based 42crunch audit
+🐳 Pulling Docker image: 42crunch/docker-api-security-audit:v4
+🔍 Running 42crunch audit via Docker...
 📊 Audit Score: 68/100
 🔍 Found 8 security issues
 
@@ -176,12 +201,34 @@ When processing FastAPI projects, the agent:
 
 Make sure you have generated and saved your OpenAPI spec as `openapi.json` in your FastAPI project directory.
 
-### "42c-audit command failed"
+### "Docker not found - using mock audit mode"
 
-Ensure you have:
+Install and start Docker:
 
-- Installed 42crunch CLI: `npm install -g @42crunch/audit-cli`
-- Valid C42_TOKEN in your `.env` file
+```bash
+# macOS
+brew install --cask docker
+open /Applications/Docker.app
+
+# Wait for Docker to start (Docker whale icon in menu bar)
+docker --version  # Should show version info
+```
+
+### "Received 'Unauthorized' response"
+
+Check your 42crunch API token:
+
+1. Log into [42crunch Platform](https://platform.42crunch.com)
+2. Go to **Profile** → **Tokens**
+3. Ensure your token has these permissions:
+   - ✅ **API Security Audit**
+   - ✅ **List resources**
+   - ✅ **Delete resources**
+4. Create a new token if needed and update your `.env` file
+
+### "The requested image's platform (linux/amd64) does not match"
+
+This is normal on Apple Silicon Macs. The agent automatically handles platform emulation.
 
 ### "GROQ_API_KEY environment variable is required"
 
@@ -190,16 +237,16 @@ Get a free API key from [console.groq.com](https://console.groq.com) and add it 
 ## 🏗️ Architecture
 
 - **LoadSpec**: Loads OpenAPI specs from files or FastAPI projects
-- **Audit42C**: Runs 42crunch security audits
+- **Audit42C**: Runs 42crunch security audits via Docker (with mock fallback)
 - **LLM_PlanPatch**: Uses Groq AI to generate security fixes
 - **WritePatch**: Applies patches and saves results
 
 Built with:
 
 - **PocketFlow**: Lightweight workflow orchestration
-- **42crunch**: Industry-leading OpenAPI security analysis
-- **Groq**: Fast, free LLM inference
-- **JSONPatch**: Precise OpenAPI modifications
+- **42crunch**: Industry-leading OpenAPI security analysis via Docker
+- **Groq**: Fast and free LLM API for AI-powered security fixes
+- **Docker**: Containerized security auditing with cross-platform support
 
 ## 📚 Resources
 
